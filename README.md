@@ -3,7 +3,7 @@
 # NNHandWritingClassification
 
 An example of a Neural Network architecture using boosting techniques to increase accuracy
-The models included uses the hand writtern letter and digit dataset, NIST Special Database 19, from NIST: https://www.nist.gov/srd/nist-special-database-19
+The models included uses the hand writtern letter and digit dataset, NIST Special Database 19 (by_class), from NIST: https://www.nist.gov/srd/nist-special-database-19
 The dataset is not included in the data folder and must be installed and placed in the folder
 
 ## Requirements
