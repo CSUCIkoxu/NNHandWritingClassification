@@ -13,8 +13,9 @@ In addition to the dataset being in the data folder, the code requires the follo
 2. Pandas
 3. Sci-kit Learn
 4. Matplotlib
-7. Tensorflow
-8. Keras
+5. Tensorflow
+6. Keras
+7. Open CV
 
 To install all of these, open the python console and run the following code in the console:
 
@@ -24,6 +25,7 @@ To install all of these, open the python console and run the following code in t
 	pip install matplotlib
 	pip install tensorflow
 	pip install keras
+	pip install opencv-python
 
 
 
