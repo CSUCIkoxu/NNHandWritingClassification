@@ -6,13 +6,38 @@ Uses a basic Convolutional Neural Network structure to read hand written letters
 
 @author: Christopher Chang
 """
+import numpy as np
 import pandas as pd
 import library.imageProcessor as imgProcessor
 import tensorflow as tf
 import tensorflow.keras as keras
 import keras.layers as layers
 
+def categorizeLabels(y, numClasses):
+    return tf.keras.utils.to_categorical(y, num_classes=numClasses, dtype = "int32")
+
+def unCategorizeLabels(y):
+    return [np.argmax(e) for e in y]
+
 def createModel(inputShape, outputNum):
+    '''
+    Creates the Machine Learning model to test
+
+    Parameters
+    ----------
+    inputShape : (int, int)
+        The shape of the input data
+    outputNum : int
+        The number of output nodes the model should have.
+        If the model is binary, it should use 1 output, not 2.
+
+    Returns
+    -------
+    model : tf.keras.Model
+        The model to use in the machine learning task.
+        Model is not compiled so that cross validation may occur.
+
+    '''
     model = None
     
     cnn = keras.Sequential()
@@ -27,8 +52,62 @@ def createModel(inputShape, outputNum):
     
     return model
 
-def trainModel(model, xTrain, yTrain):
-    return
+def trainModel(model, imageProc, xTrain, yTrain):
+    trainedModel = None
+    hyperParameters = []
+    trainingScore = 0
+    
+    yTrainVect = categorizeLabels(yTrain, len(imageProc.characterEnum))
+    
+    xTrainNew, yTrainNew, xValid, yValid = imageProc.splitData(xTrain, yTrainVect, 123)
+    
+    #Callback for early stopping
+    callbackBest = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+    
+    #Hold-out Cross-validation
+    scores = {}
+    scoreEpoch = {}
+    optimizers = ['adadelta', 'adagrad', 'adam', 'adamax', 'ftrl', 'nadam', 'rmsprop', 'sgd']
+    lossFuncs = ['mean_absolute_error', 'mean_squared_error', 'huber_loss']
+    metrics = [["categorical_accuracy"]]
+    
+    for o in optimizers:
+        for l in lossFuncs:
+            for m in metrics:
+                #Debug Logger
+                print("{}, {}, {}".format(o, l, m))
+                
+                currModel = keras.models.clone_model(model)
+                currModel.compile(optimizer=o, loss=l, metrics=m)
+                
+                modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=100, validation_data=(xValid,yValid), callbacks=[callbackBest])
+                
+                #Since we have early stopping, we want to get the epoch at which we had the best score
+                minScore = min(modelHist.history["val_" + m[0]])
+                for i in range(len(modelHist.history["val_" + m[0]])):
+                    if (modelHist.history["val_" + m[0]][i] == minScore):
+                            scoreEpoch[(o, l, m[0])] = i
+                            break
+                            
+                scores[(o, l, m[0])] = minScore
+                
+    trainingScore = min(scores.values())
+    for k in scores.keys():
+        if (trainingScore == scores[k]):
+            hyperParameters = k
+            break
+    
+    #Recreate the best model
+    trainedModel = model
+    trainedModel.compile(optimizer=hyperParameters[0], 
+               loss=hyperParameters[1], 
+               metrics=[hyperParameters[2]])
+    
+    #Train the best model on the whole data
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="../logs/basicCNN", histogram_freq=1)
+    trainedModel.fit(xTrain, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=100, callbacks=[callbackBest, tensorboard_callback])
+    
+    return trainedModel, hyperParameters, trainingScore
 
 def testModel(model, xTest, yTest):
     return
