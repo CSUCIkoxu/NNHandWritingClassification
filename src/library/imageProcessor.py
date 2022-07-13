@@ -44,6 +44,12 @@ class imageProcessor:
         '''
         self.characterClasses = chars
         
+    def char2Enum(self, char):
+        return self.characterEnum[char]
+    
+    def enum2Char(self, enum):
+        return self.characterList[enum]
+        
     def getTrainingData(self):
         '''
         Gets the training data for the specified character classes
