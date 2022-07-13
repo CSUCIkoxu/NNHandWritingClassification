@@ -28,6 +28,10 @@ class imageProcessor:
         import string
         self.characterList.append(list(string.ascii_letters))
         
+        self.characterEnum = {}
+        for i in range(len(self.characterList)):
+            self.characterEnum[self.characterList[i]] = i
+        
     def setCharClass(self, chars):
         '''
         Sets the Character Classes to use
@@ -102,8 +106,9 @@ class imageProcessor:
         -------
         x : list<list<int,int>>
             List of feature data for the 2d images
-        y : lsit<str>
-            List of label data
+        y : list<int>
+            List of label data. The labels are given as ints which
+            corresponds to this classes' characterEnum
 
         '''
         x = []
@@ -122,7 +127,7 @@ class imageProcessor:
             
             charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.trainDirectory + char2Hex
             
-            data.append(((e, char) for e in self._loadRandomImages(charDataDir, quantity)))
+            data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
             
         #Randomize the elements in the array
     
@@ -150,8 +155,9 @@ class imageProcessor:
         -------
         x : list<list<int,int>>
             List of feature data for the 2d images
-        y : lsit<str>
-            List of label data
+        y : list<int>
+            List of label data. The labels are given as ints which
+            corresponds to this classes' characterEnum
 
         '''
         x = []
@@ -170,7 +176,7 @@ class imageProcessor:
             
             charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.testDirectory
             
-            data.append(((e, char) for e in self._loadRandomImages(charDataDir, quantity)))
+            data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
             
         #Randomize the elements in the array
     
@@ -200,11 +206,11 @@ class imageProcessor:
         -------
         xTrain : list<list<int, int>>
             The list of features of the training set
-        yTrain : list<str>
+        yTrain : list<int>
             The list of labels of the training set
         xTest : list<list<int, int>>
             The list of features of the testing set
-        yTest : list<str>
+        yTest : list<int>
             The list of labels of the testing set
 
         '''
@@ -218,6 +224,60 @@ class imageProcessor:
         xTrain, xTest, yTrain, yTest = ms.train_test_split(x, y, test_size=0.3, random_state=seed)
         
         return xTrain, yTrain, xTest, yTest
+    
+    def calculateF1Score(self, yPred, yTrue, avg='binary'):
+        '''
+        Calculates the F1-Score of the labels predicted by the model.
+        This project uses F1-Score as the standard metric.
+
+        Parameters
+        ----------
+        yPred : list
+            The list of predicted labels
+        yTrue : list
+            the list of true labels
+        avg : str, optional
+            The way the average will be calculated for the f1-score. When 
+            there is more than 2 labels, use 'weighted'. The default is 'binary'.
+
+        Returns
+        -------
+        f1Score : float
+            The F1-Score of the prediction
+
+        '''
+        f1Score = -1.0
+        
+        import sklearn.metrics as mt
+        
+        f1Score = mt.f1_score(yTrue, yPred, average=avg)
+        
+        return f1Score
+    
+    def calculateReport(self, yPred, yTrue):
+        '''
+        Returns the classification report for analysis
+
+        Parameters
+        ----------
+        yPred : list<int>
+            The list of predicted labels of the test data
+        yTrue : list<int>
+            The list of the true labels of the test data
+
+        Returns
+        -------
+        statsStr : str
+            The classification report from the above stats
+
+        '''
+        statsStr = ""
+        
+        import sklearn.metrics as mt
+        
+        statsStr = mt.classification_report(yTrue, yPred)
+        
+        return statsStr
         
     def _loadImages(self, path):
         '''
