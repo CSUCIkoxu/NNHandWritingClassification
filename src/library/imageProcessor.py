@@ -201,22 +201,22 @@ class imageProcessor:
 
         Parameters
         ----------
-        x : list<list<int, int>> or panda.dataframe
+        x : list or panda.dataframe
             The list of features
-        y : list<str>
+        y : list
             The list of labels
         seed : int, optional
             An optional seed to use when splitting. The default is None.
 
         Returns
         -------
-        xTrain : list<list<int, int>>
+        xTrain : list
             The list of features of the training set
-        yTrain : list<int>
+        yTrain : list
             The list of labels of the training set
-        xTest : list<list<int, int>>
+        xTest : list
             The list of features of the testing set
-        yTest : list<int>
+        yTest : list
             The list of labels of the testing set
 
         '''
