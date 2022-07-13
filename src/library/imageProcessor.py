@@ -23,7 +23,6 @@ class imageProcessor:
         
         #Processor Information
         self.characterClasses = []
-        #self.characterList = ['0','1','2','3','4','5','6','7,8,9,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t','u','v','w','x','y','z']
         
         self.characterList = [str(i) for i in range(10)]
         import string
@@ -183,14 +182,42 @@ class imageProcessor:
         
         return x, y
     
-    def splitCV(self, x, y):
-        trainingX = None
-        trainingY = None
-        validX = None
-        validY = None
+    def splitData(self, x, y, seed=None):
+        '''
+        Splits the data that is given to training and test sets, 70%-30%.
+        Intended to be used for cross-validation.
+
+        Parameters
+        ----------
+        x : list<list<int, int>> or panda.dataframe
+            The list of features
+        y : list<str>
+            The list of labels
+        seed : int, optional
+            An optional seed to use when splitting. The default is None.
+
+        Returns
+        -------
+        xTrain : list<list<int, int>>
+            The list of features of the training set
+        yTrain : list<str>
+            The list of labels of the training set
+        xTest : list<list<int, int>>
+            The list of features of the testing set
+        yTest : list<str>
+            The list of labels of the testing set
+
+        '''
+        xTrain = None
+        yTrain = None
+        xTest = None
+        yTest = None
         
-        return trainingX, validX, trainingY, validY
+        import sklearn.model_selection as ms
         
+        xTrain, xTest, yTrain, yTest = ms.train_test_split(x, y, test_size=0.3, random_state=seed)
+        
+        return xTrain, yTrain, xTest, yTest
         
     def _loadImages(self, path):
         '''
@@ -203,8 +230,12 @@ class imageProcessor:
 
         Returns
         -------
-        data : list<int, int>
-            DESCRIPTION.
+        data : list<list<int, int>>
+            A list of lists containing the image data
+                [[image data],
+                 [image data],
+                 ...]
+            where image data is a 2d array (grey scale images)
 
         '''
         data = []
