@@ -26,7 +26,8 @@ class imageProcessor:
         
         self.characterList = [str(i) for i in range(10)]
         import string
-        self.characterList.append(list(string.ascii_letters))
+        for c in list(string.ascii_letters):
+            self.characterList.append(c)
         
         self.characterEnum = {}
         for i in range(len(self.characterList)):
@@ -67,7 +68,7 @@ class imageProcessor:
             #The folders in the dataset are labeled by ASCII hex values
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.trainDirectory + char2Hex
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
             
             data[char] = self._loadImages(charDataDir)
         
@@ -90,7 +91,7 @@ class imageProcessor:
             #The folders in the dataset are labeled by ASCII hex values
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.testDirectory
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
             
             data[char] = self._loadImages(charDataDir)
         
@@ -131,7 +132,7 @@ class imageProcessor:
         for char in self.characterList:
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.trainDirectory + char2Hex
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
             
             data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
             
@@ -180,7 +181,7 @@ class imageProcessor:
         for char in self.characterList:
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.testDirectory
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
             
             data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
             

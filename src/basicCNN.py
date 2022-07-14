@@ -10,8 +10,8 @@ import numpy as np
 # import pandas as pd
 import library.imageProcessor as imgProcessor
 import tensorflow as tf
-from tensorflow import keras as keras
-from keras import layers as layers
+import tensorflow.keras as keras
+from tensorflow.keras import layers
 
 def categorizeLabels(y, numClasses):
     return tf.keras.utils.to_categorical(y, num_classes=numClasses, dtype = "int32")
