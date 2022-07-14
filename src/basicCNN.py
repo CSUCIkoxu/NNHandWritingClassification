@@ -7,7 +7,7 @@ Uses a basic Convolutional Neural Network structure to read hand written letters
 @author: Christopher Chang
 """
 import numpy as np
-# import pandas as pd
+import pandas as pd
 import library.imageProcessor as imgProcessor
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -25,7 +25,7 @@ def createModel(inputShape, outputNum):
 
     Parameters
     ----------
-    inputShape : (int, int)
+    inputShape : (int, int, int)
         The shape of the input data
     outputNum : int
         The number of output nodes the model should have.
@@ -41,7 +41,7 @@ def createModel(inputShape, outputNum):
     model = None
     
     cnn = keras.Sequential()
-    cnn.add(layers.Conv2D(3, 5, (3,3), input_shape=inputShape, activation='relu'))
+    cnn.add(layers.Conv2D(3, 5, (3,3), input_shape=inputShape, activation='relu'))  #(filters, kernel size, stride)
     cnn.add(layers.Conv2D(1, 6, (2,2), activation='relu'))
     cnn.add(layers.Flatten())
     cnn.add(layers.Dense(20, activation='relu'))
@@ -52,12 +52,12 @@ def createModel(inputShape, outputNum):
     
     return model
 
-def trainModel(model, imageProc, xTrain, yTrain):
+def trainModel(model, imageProc, categorize, xTrain, yTrain):
     trainedModel = None
     hyperParameters = []
     trainingScore = 0
     
-    yTrainVect = categorizeLabels(yTrain, len(imageProc.characterEnum))
+    yTrainVect = categorizeLabels(yTrain, categorize)
     
     xTrainNew, yTrainNew, xValid, yValid = imageProc.splitData(xTrain, yTrainVect, 123)
     
@@ -68,8 +68,8 @@ def trainModel(model, imageProc, xTrain, yTrain):
     scores = {}
     scoreEpoch = {}
     optimizers = ['adadelta', 'adagrad', 'adam', 'adamax', 'ftrl', 'nadam', 'rmsprop', 'sgd']
-    lossFuncs = ['mean_absolute_error', 'mean_squared_error', 'huber_loss']
-    metrics = [["categorical_accuracy"]]
+    lossFuncs = ['categorical_crossentropy', 'kl_divergence']#, 'poisson']  #poisson gives nan values for some reason
+    metrics = [['categorical_crossentropy']]
     
     for o in optimizers:
         for l in lossFuncs:
@@ -105,7 +105,7 @@ def trainModel(model, imageProc, xTrain, yTrain):
     
     #Train the best model on the whole data
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="../logs/basicCNN", histogram_freq=1)
-    trainedModel.fit(xTrain, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=100, callbacks=[callbackBest, tensorboard_callback])
+    trainedModel.fit(xTrain, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=100, callbacks=[tensorboard_callback])
     
     return trainedModel, hyperParameters, trainingScore
 
@@ -114,7 +114,9 @@ def testModel(model, imageProc, xTest, yTest):
     f1Score = -1.0
     classReport = ""
     
-    yPred = model.predict(xTest)
+    yPredRaw = model.predict(xTest)
+    
+    yPred = unCategorizeLabels(yPredRaw)
     
     f1Score = imageProc.calculateF1Score(yPred, yTest, avg='weighted')
     classReport = imageProc.calculateReport(yPred, yTest)
@@ -129,12 +131,12 @@ xTrain, yTrain = imageProc.getRandomTrainingData(100, seed=123)
 xTest, yTest = imageProc.getRandomTestingData(10, seed=123)
 
 #Create the model
-# model = createModel((128,128), 62)
+model = createModel((128,128,1), 62)
 
 #Train the model, get hyperParameters, and get the training score
-# trainedModel, hyperParams, trainingScore = trainModel(model, imageProc, xTrain, yTrain)
+trainedModel, hyperParams, trainingScore = trainModel(model, imageProc, len(imageProc.characterList), xTrain, yTrain)
 
 #Test the model and calculate stats
-# yPred, f1Score, classReport = testModel(trainedModel, imageProc, xTest, yTest)
+yPred, f1Score, classReport = testModel(trainedModel, imageProc, xTest, yTest)
 
-# print(classReport)
+print(classReport)

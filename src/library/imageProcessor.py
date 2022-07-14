@@ -64,6 +64,8 @@ class imageProcessor:
         '''
         data = {}   #data will be organized in a dictionary
         
+        # import pandas as pd
+        
         for char in self.characterClasses:
             #The folders in the dataset are labeled by ASCII hex values
             char2Hex = format(ord(char), "x")
@@ -86,6 +88,8 @@ class imageProcessor:
 
         '''
         data = {}   #data will be organized in a dictionary
+        
+        # import pandas as pd
         
         for char in self.characterClasses:
             #The folders in the dataset are labeled by ASCII hex values
@@ -124,6 +128,8 @@ class imageProcessor:
         data = []
         
         import random
+        import pandas as pd
+        import numpy as np
         
         if (seed != None):
             random.seed(seed)
@@ -134,15 +140,17 @@ class imageProcessor:
             
             charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
             
-            data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
+            data = data + [(e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)]
             
         #Randomize the elements in the array
-    
         random.shuffle(data)
         
         #Split data to its features (x) and labels (y)
-        x = data[:][0]
-        y = data[:][1]
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        y = dataDF["target"].to_numpy()
+        
+        x = np.stack(x).astype(None)
         
         return x, y
     
@@ -173,6 +181,8 @@ class imageProcessor:
         data = []
         
         import random
+        import pandas as pd
+        import numpy as np
         
         if (seed != None):
             random.seed(seed)
@@ -183,15 +193,17 @@ class imageProcessor:
             
             charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
             
-            data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
+            data = data + [(e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)]
             
         #Randomize the elements in the array
-    
         random.shuffle(data)
         
         #Split data to its features (x) and labels (y)
-        x = data[:][0]
-        y = data[:][1]
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        y = dataDF["target"].to_numpy()
+        
+        x = np.stack(x).astype(None)
         
         return x, y
     
