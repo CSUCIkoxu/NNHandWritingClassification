@@ -7,11 +7,11 @@ Uses a basic Convolutional Neural Network structure to read hand written letters
 @author: Christopher Chang
 """
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import library.imageProcessor as imgProcessor
 import tensorflow as tf
-import tensorflow.keras as keras
-import keras.layers as layers
+from tensorflow import keras as keras
+from keras import layers as layers
 
 def categorizeLabels(y, numClasses):
     return tf.keras.utils.to_categorical(y, num_classes=numClasses, dtype = "int32")
@@ -109,5 +109,32 @@ def trainModel(model, imageProc, xTrain, yTrain):
     
     return trainedModel, hyperParameters, trainingScore
 
-def testModel(model, xTest, yTest):
-    return
+def testModel(model, imageProc, xTest, yTest):
+    yPred = []
+    f1Score = -1.0
+    classReport = ""
+    
+    yPred = model.predict(xTest)
+    
+    f1Score = imageProc.calculateF1Score(yPred, yTest, avg='weighted')
+    classReport = imageProc.calculateReport(yPred, yTest)
+    
+    
+    return yPred, f1Score, classReport
+
+imageProc = imgProcessor.imageProcessor()
+
+#Get data
+xTrain, yTrain = imageProc.getRandomTrainingData(1000, seed=123)
+xTest, yTest = imageProc.getRandomTestingData(100, seed=123)
+
+#Create the model
+# model = createModel((128,128), 62)
+
+#Train the model, get hyperParameters, and get the training score
+# trainedModel, hyperParams, trainingScore = trainModel(model, imageProc, xTrain, yTrain)
+
+#Test the model and calculate stats
+# yPred, f1Score, classReport = testModel(trainedModel, imageProc, xTest, yTest)
+
+# print(classReport)
