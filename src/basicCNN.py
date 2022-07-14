@@ -125,8 +125,8 @@ def testModel(model, imageProc, xTest, yTest):
 imageProc = imgProcessor.imageProcessor()
 
 #Get data
-xTrain, yTrain = imageProc.getRandomTrainingData(1000, seed=123)
-xTest, yTest = imageProc.getRandomTestingData(100, seed=123)
+xTrain, yTrain = imageProc.getRandomTrainingData(100, seed=123)
+xTest, yTest = imageProc.getRandomTestingData(10, seed=123)
 
 #Create the model
 # model = createModel((128,128), 62)

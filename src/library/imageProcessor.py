@@ -138,7 +138,7 @@ class imageProcessor:
             
         #Randomize the elements in the array
     
-        random.shuffle(data, random.random())
+        random.shuffle(data)
         
         #Split data to its features (x) and labels (y)
         x = data[:][0]
@@ -187,7 +187,7 @@ class imageProcessor:
             
         #Randomize the elements in the array
     
-        random.shuffle(data, random.random())
+        random.shuffle(data)
         
         #Split data to its features (x) and labels (y)
         x = data[:][0]
