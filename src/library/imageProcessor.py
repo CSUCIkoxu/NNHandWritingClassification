@@ -20,6 +20,7 @@ class imageProcessor:
         self.organizationDirectory = "/by_class"
         self.trainDirectory = "/train_"
         self.testDirectory = "/hsf_4"
+        self.modelSavesDirectory = "../savedModels"
         
         #Processor Information
         self.characterClasses = []
@@ -148,9 +149,9 @@ class imageProcessor:
         #Split data to its features (x) and labels (y)
         dataDF = pd.DataFrame(data, columns=["features", "target"])
         x = dataDF["features"].to_numpy()
-        y = dataDF["target"].to_numpy()
+        y = dataDF["target"].to_numpy("uint8")
         
-        x = np.stack(x).astype(None)
+        x = np.stack(x).astype("uint8")
         
         return x, y
     
@@ -201,9 +202,9 @@ class imageProcessor:
         #Split data to its features (x) and labels (y)
         dataDF = pd.DataFrame(data, columns=["features", "target"])
         x = dataDF["features"].to_numpy()
-        y = dataDF["target"].to_numpy()
+        y = dataDF["target"].to_numpy("uint8")
         
-        x = np.stack(x).astype(None)
+        x = np.stack(x).astype("uint8")
         
         return x, y
     
@@ -272,6 +273,16 @@ class imageProcessor:
         f1Score = mt.f1_score(yTrue, yPred, average=avg)
         
         return f1Score
+    
+    def createConfusionMatrix(self, yPred, yTrue, labels=None):
+        
+        confMat = ''
+        
+        import sklearn.metrics as mt
+        
+        confMat = mt.confusion_matrix(yTrue, yPred, labels=labels)
+        
+        return confMat
     
     def calculateReport(self, yPred, yTrue):
         '''

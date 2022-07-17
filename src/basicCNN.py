@@ -46,7 +46,7 @@ def createModel(inputShape, outputNum):
     cnn.add(layers.Flatten())
     cnn.add(layers.Dense(20, activation='relu'))
     cnn.add(layers.Dense(10, activation='relu'))
-    cnn.add(layers.Dense(outputNum))     #output
+    cnn.add(layers.Dense(outputNum, activation='softmax'))     #output
     
     model = cnn
     
@@ -80,13 +80,13 @@ def trainModel(model, imageProc, categorize, xTrain, yTrain):
                 currModel = keras.models.clone_model(model)
                 currModel.compile(optimizer=o, loss=l, metrics=m)
                 
-                modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=100, validation_data=(xValid,yValid), callbacks=[callbackBest])
+                modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=20, validation_data=(xValid,yValid), callbacks=[callbackBest])
                 
                 #Since we have early stopping, we want to get the epoch at which we had the best score
                 minScore = min(modelHist.history["val_" + m[0]])
                 for i in range(len(modelHist.history["val_" + m[0]])):
                     if (modelHist.history["val_" + m[0]][i] == minScore):
-                            scoreEpoch[(o, l, m[0])] = i
+                            scoreEpoch[(o, l, m[0])] = i + 1
                             break
                             
                 scores[(o, l, m[0])] = minScore
@@ -98,20 +98,21 @@ def trainModel(model, imageProc, categorize, xTrain, yTrain):
             break
     
     #Recreate the best model
-    trainedModel = model
+    trainedModel = keras.models.clone_model(model)
     trainedModel.compile(optimizer=hyperParameters[0], 
                loss=hyperParameters[1], 
                metrics=[hyperParameters[2]])
     
     #Train the best model on the whole data
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="../logs/basicCNN", histogram_freq=1)
-    trainedModel.fit(xTrain, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=100, callbacks=[tensorboard_callback])
+    trainedModel.fit(xTrain, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=20, callbacks=[tensorboard_callback])
     
     return trainedModel, hyperParameters, trainingScore
 
 def testModel(model, imageProc, xTest, yTest):
     yPred = []
     f1Score = -1.0
+    confMat = None
     classReport = ""
     
     yPredRaw = model.predict(xTest)
@@ -119,15 +120,19 @@ def testModel(model, imageProc, xTest, yTest):
     yPred = unCategorizeLabels(yPredRaw)
     
     f1Score = imageProc.calculateF1Score(yPred, yTest, avg='weighted')
+    confMat = imageProc.createConfusionMatrix(yPred, yTest)
     classReport = imageProc.calculateReport(yPred, yTest)
     
     
-    return yPred, f1Score, classReport
+    return yPred, f1Score, confMat, classReport
 
+#MAIN ##########################################################
+
+#import the image processor class with all the helper functions
 imageProc = imgProcessor.imageProcessor()
 
 #Get data
-xTrain, yTrain = imageProc.getRandomTrainingData(100, seed=123)
+xTrain, yTrain = imageProc.getRandomTrainingData(200, seed=123)
 xTest, yTest = imageProc.getRandomTestingData(10, seed=123)
 
 #Create the model
@@ -137,6 +142,10 @@ model = createModel((128,128,1), 62)
 trainedModel, hyperParams, trainingScore = trainModel(model, imageProc, len(imageProc.characterList), xTrain, yTrain)
 
 #Test the model and calculate stats
-yPred, f1Score, classReport = testModel(trainedModel, imageProc, xTest, yTest)
+yPred, f1Score, confMat, classReport = testModel(trainedModel, imageProc, xTest, yTest)
 
 print(classReport)
+print(confMat)
+
+#Save the model
+trainedModel.save(imageProc.modelSavesDirectory + '/basicCNN')
