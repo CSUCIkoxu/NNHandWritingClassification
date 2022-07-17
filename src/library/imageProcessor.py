@@ -20,13 +20,15 @@ class imageProcessor:
         self.organizationDirectory = "/by_class"
         self.trainDirectory = "/train_"
         self.testDirectory = "/hsf_4"
+        self.modelSavesDirectory = "../savedModels"
         
         #Processor Information
         self.characterClasses = []
         
         self.characterList = [str(i) for i in range(10)]
         import string
-        self.characterList.append(list(string.ascii_letters))
+        for c in list(string.ascii_letters):
+            self.characterList.append(c)
         
         self.characterEnum = {}
         for i in range(len(self.characterList)):
@@ -63,11 +65,13 @@ class imageProcessor:
         '''
         data = {}   #data will be organized in a dictionary
         
+        # import pandas as pd
+        
         for char in self.characterClasses:
             #The folders in the dataset are labeled by ASCII hex values
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.trainDirectory + char2Hex
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
             
             data[char] = self._loadImages(charDataDir)
         
@@ -86,11 +90,13 @@ class imageProcessor:
         '''
         data = {}   #data will be organized in a dictionary
         
+        # import pandas as pd
+        
         for char in self.characterClasses:
             #The folders in the dataset are labeled by ASCII hex values
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.testDirectory
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
             
             data[char] = self._loadImages(charDataDir)
         
@@ -123,6 +129,8 @@ class imageProcessor:
         data = []
         
         import random
+        import pandas as pd
+        import numpy as np
         
         if (seed != None):
             random.seed(seed)
@@ -131,17 +139,19 @@ class imageProcessor:
         for char in self.characterList:
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.trainDirectory + char2Hex
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
             
-            data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
+            data = data + [(e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)]
             
         #Randomize the elements in the array
-    
-        random.shuffle(data, random.random())
+        random.shuffle(data)
         
         #Split data to its features (x) and labels (y)
-        x = data[:][0]
-        y = data[:][1]
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        y = dataDF["target"].to_numpy("uint8")
+        
+        x = np.stack(x).astype("uint8")
         
         return x, y
     
@@ -172,6 +182,8 @@ class imageProcessor:
         data = []
         
         import random
+        import pandas as pd
+        import numpy as np
         
         if (seed != None):
             random.seed(seed)
@@ -180,17 +192,19 @@ class imageProcessor:
         for char in self.characterList:
             char2Hex = format(ord(char), "x")
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + char2Hex + self.testDirectory
+            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
             
-            data.append(((e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)))
+            data = data + [(e, self.characterEnum[char]) for e in self._loadRandomImages(charDataDir, quantity)]
             
         #Randomize the elements in the array
-    
-        random.shuffle(data, random.random())
+        random.shuffle(data)
         
         #Split data to its features (x) and labels (y)
-        x = data[:][0]
-        y = data[:][1]
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        y = dataDF["target"].to_numpy("uint8")
+        
+        x = np.stack(x).astype("uint8")
         
         return x, y
     
@@ -259,6 +273,16 @@ class imageProcessor:
         f1Score = mt.f1_score(yTrue, yPred, average=avg)
         
         return f1Score
+    
+    def createConfusionMatrix(self, yPred, yTrue, labels=None):
+        
+        confMat = ''
+        
+        import sklearn.metrics as mt
+        
+        confMat = mt.confusion_matrix(yTrue, yPred, labels=labels)
+        
+        return confMat
     
     def calculateReport(self, yPred, yTrue):
         '''
