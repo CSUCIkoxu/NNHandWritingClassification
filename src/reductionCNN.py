@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Basic CNN
+Reduction CNN
 
-Uses a basic Convolutional Neural Network structure to read hand written letters
+Uses a Convolutional Neural Network structure that reduces with each layer 
+to read hand written letters
 
 @author: Christopher Chang
 """
@@ -41,11 +42,16 @@ def createModel(inputShape, outputNum):
     model = None
     
     cnn = keras.Sequential()
-    cnn.add(layers.Conv2D(3, 5, (3,3), input_shape=inputShape, activation='relu'))  #(filters, kernel size, stride)
-    cnn.add(layers.Conv2D(1, 6, (2,2), activation='relu'))
+    cnn.add(layers.Conv2D(62, 5, (3,3), input_shape=inputShape, activation='relu', padding='valid'))  #(filters, kernel size, stride)
+    cnn.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(1,1), padding="valid", data_format=None))
+    cnn.add(layers.Conv2D(124, 3, (1,1), activation='relu', padding="valid"))
+    cnn.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2,2), padding="valid", data_format=None))
+    cnn.add(layers.Conv2D(248, 3, (1,1), activation='relu', padding="valid"))
+    cnn.add(keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2,2), padding="valid", data_format=None))
     cnn.add(layers.Flatten())
-    cnn.add(layers.Dense(20, activation='relu'))
-    cnn.add(layers.Dense(10, activation='relu'))
+    cnn.add(layers.Dense(512, activation='relu'))
+    cnn.add(layers.Dropout(0.3))
+    cnn.add(layers.Dense(256, activation='relu'))
     cnn.add(layers.Dense(outputNum, activation='softmax'))     #output
     
     model = cnn
@@ -104,7 +110,7 @@ def trainModel(model, imageProc, categorize, xTrain, yTrain):
                metrics=[hyperParameters[2]])
     
     #Train the best model on the whole data
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="../logs/basicCNN", histogram_freq=1)
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="../logs/reductionCNN", histogram_freq=1)
     trainedModel.fit(xTrain, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=20, callbacks=[tensorboard_callback])
     
     return trainedModel, hyperParameters, trainingScore
@@ -148,13 +154,13 @@ print(classReport)
 print(confMat)
 
 #Save the model
-trainedModel.save(imageProc.modelSavesDirectory + '/basicCNN')
+trainedModel.save(imageProc.modelSavesDirectory + '/reductionCNN')
 
 #Use this to generate tensorboard charts on saved models
 #%load_ext tensorboard
-#%tensorboard --logdir "logs/bestFitNN"
+#%tensorboard --logdir "logs/logs/reductionCNN"
 #NN Located at: http://localhost:6006/#scalars
 
 #Use this to specify a port
-#%tensorboard --logdir "logs/bestFitCNN" --port=6007
+#%tensorboard --logdir "logs/logs/reductionCNN" --port=6007
 #NN Located at: http://localhost:6007/#scalars
