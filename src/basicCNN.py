@@ -121,7 +121,7 @@ def testModel(model, imageProc, xTest, yTest):
     
     f1Score = imageProc.calculateF1Score(yPred, yTest, avg='weighted')
     confMat = imageProc.createConfusionMatrix(yPred, yTest)
-    classReport = imageProc.calculateReport(yPred, yTest)
+    classReport = imageProc.calculateReport(yPred, yTest, names=imageProc.characterList)
     
     
     return yPred, f1Score, confMat, classReport

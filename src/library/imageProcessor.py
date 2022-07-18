@@ -284,7 +284,7 @@ class imageProcessor:
         
         return confMat
     
-    def calculateReport(self, yPred, yTrue):
+    def calculateReport(self, yPred, yTrue, names=None):
         '''
         Returns the classification report for analysis
 
@@ -305,7 +305,7 @@ class imageProcessor:
         
         import sklearn.metrics as mt
         
-        statsStr = mt.classification_report(yTrue, yPred)
+        statsStr = mt.classification_report(yTrue, yPred, target_names=names)
         
         return statsStr
         
