@@ -23,8 +23,6 @@ class imageProcessor:
         self.modelSavesDirectory = "../savedModels"
         
         #Processor Information
-        self.characterClasses = []
-        
         self.characterList = [str(i) for i in range(10)]
         import string
         for c in list(string.ascii_letters):
@@ -34,74 +32,179 @@ class imageProcessor:
         for i in range(len(self.characterList)):
             self.characterEnum[self.characterList[i]] = i
         
-    def setCharClass(self, chars):
-        '''
-        Sets the Character Classes to use
-
-        Parameters
-        ----------
-        chars : list<string>
-            A list of characters to read data from
-
-        '''
-        self.characterClasses = chars
-        
     def char2Enum(self, char):
         return self.characterEnum[char]
     
     def enum2Char(self, enum):
         return self.characterList[enum]
         
-    def getTrainingData(self):
+    def getTrainingData(self, target, seed=None):
         '''
-        Gets the training data for the specified character classes
+        Gets training data for a specific character + negative cases
+
+        Parameters
+        ----------
+        target : char
+            The char representing the target you want to get data for
+        seed : int, optional
+            A seed to use when randomly selecting data for the 0 cases and 
+            how to shuffle the data. The default is None.
 
         Returns
         -------
-        data : dict<str : list<int, int>>
-            A dictionary for each character class with the corresponding training
-            data
+        x : numpy.array<numpy.array<uint8, uint8>>
+            A 3-d array containing a mixture of features from positive and 
+            negative cases 
+        y : numpy.array<uint8>
+            A List of labels corresponding to the data in x.
+            1 if the label matches the specified target,
+            0 otherwise.
 
         '''
-        data = {}   #data will be organized in a dictionary
+        x = []
+        y = []
         
-        # import pandas as pd
+        data = []
         
-        for char in self.characterClasses:
-            #The folders in the dataset are labeled by ASCII hex values
-            char2Hex = format(ord(char), "x")
+        import random
+        import numpy as np
+        import pandas as pd
+        
+        if (seed != None):
+            random.seed(seed)
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
-            
-            data[char] = self._loadImages(charDataDir)
+        targetData = self._getTargetTrainingData(target)
+        notTargetData = self._getNotTargetTrainingData(target, len(targetData), seed)
         
-        return data
+        data = targetData + notTargetData
+        
+        #Randomize the elements in the array
+        random.shuffle(data)
+        
+        #Split data to its features (x) and labels (y)
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        y = dataDF["target"].to_numpy("uint8")
+        
+        x = np.stack(x).astype("uint8")
+        
+        return x, y
     
-    def getTestingData(self):
+    def getTestingData(self, target, seed=None):
         '''
-        Gets the testing data for the specified character classes
+        Gets testing data for a specific character + negative cases
+
+        Parameters
+        ----------
+        target : char
+            The char representing the target you want to get data for
+        seed : int, optional
+            A seed to use when randomly selecting data for the 0 cases and 
+            how to shuffle the data. The default is None.
 
         Returns
         -------
-        data : dict<str : list<int, int>>
-            A dictionary for each character class with the corresponding testing
-            data
+        x : numpy.array<numpy.array<uint8, uint8>>
+            A 3-d array containing a mixture of features from positive and 
+            negative cases 
+        y : numpy.array<uint8>
+            A List of labels corresponding to the data in x.
+            1 if the label matches the specified target,
+            0 otherwise.
 
         '''
-        data = {}   #data will be organized in a dictionary
+        x = []
+        y = []
         
-        # import pandas as pd
+        data = []
         
-        for char in self.characterClasses:
-            #The folders in the dataset are labeled by ASCII hex values
-            char2Hex = format(ord(char), "x")
+        import random
+        import numpy as np
+        import pandas as pd
+        
+        if (seed != None):
+            random.seed(seed)
             
-            charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
-            
-            data[char] = self._loadImages(charDataDir)
+        targetData = self._getTargetTestingData(target)
+        notTargetData = self._getNotTargetTestingData(target, len(targetData), seed)
         
-        return data
+        data = targetData + notTargetData
+        
+        #Randomize the elements in the array
+        random.shuffle(data)
+        
+        #Split data to its features (x) and labels (y)
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        y = dataDF["target"].to_numpy("uint8")
+        
+        x = np.stack(x).astype("uint8")
+        
+        return x, y
     
+    def getCharTrainingData(self, target):
+        '''
+        Gets the training data exclusivly for a specific character.
+        Does not return labels since the labels are specified.
+
+        Parameters
+        ----------
+        target : char
+            The char representing the target you want to get data for
+
+        Returns
+        -------
+        x : numpy.array<numpy.array<uint8, uint8>>
+            A 3-d array containing features of the target
+
+        '''
+        x = []
+        
+        import pandas as pd
+        import numpy as np
+        
+        data = self._getTargetTrainingData(target)
+        
+        #Split data to its features (x) and labels (y)
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        
+        x = np.stack(x).astype("uint8")
+        
+        return x
+    
+    def getCharTestingData(self, target):
+        '''
+        Gets the testing data exclusivly for a specific character.
+        Does not return labels since the labels are specified.
+
+        Parameters
+        ----------
+        target : char
+            The char representing the target you want to get data for
+
+        Returns
+        -------
+        x : numpy.array<numpy.array<uint8, uint8>>
+            A 3-d array containing features of the target
+
+        '''
+        x = []
+        
+        import pandas as pd
+        import numpy as np
+        
+        data = self._getTargetTestingData(target)
+        
+        #Split data to its features (x) and labels (y)
+        dataDF = pd.DataFrame(data, columns=["features", "target"])
+        x = dataDF["features"].to_numpy()
+        
+        x = np.stack(x).astype("uint8")
+        
+        return x
+    
+    #The following 2 functions are for standard CNN models
     def getRandomTrainingData(self, quantity, seed=None):
         '''
         Gets a list of random training samples and their labels
@@ -308,6 +411,72 @@ class imageProcessor:
         statsStr = mt.classification_report(yTrue, yPred, target_names=names)
         
         return statsStr
+    
+    def _getTargetTrainingData(self, target):
+        data = []
+            
+        #Get the data of the specific target
+        char2Hex = format(ord(target), "x")
+        
+        charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
+        
+        data = [(e, 1) for e in self._loadImages(charDataDir)]
+        
+        return data
+    
+    def _getTargetTestingData(self, target, quantity):
+        data = []
+            
+        #Get the data of the specific target
+        char2Hex = format(ord(target), "x")
+            
+        charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
+                
+        data = [(e, 1) for e in self._loadImages(charDataDir)]
+        
+        return data
+    
+    def _getNotTargetTrainingData(self, target, quantity, seed=None):
+        data = []
+        
+        import random
+        
+        if (seed != None):
+            random.seed(seed)
+            
+        quantityEach = int(quantity / (len(self.characterList) - 1))
+        
+        #Iterate through all of the characters to generate balanced data
+        for char in self.characterList:
+            if (char != target):
+                char2Hex = format(ord(char), "x")
+                
+                charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.trainDirectory + char2Hex
+                
+                data = data + [(e, 0) for e in self._loadRandomImages(charDataDir, quantityEach)]
+        
+        return data
+    
+    def _getNotTargetTestingData(self, target, quantity, seed=None):
+        data = []
+        
+        import random
+        
+        if (seed != None):
+            random.seed(seed)
+            
+        quantityEach = int(quantity / (len(self.characterList) - 1))
+        
+        #Iterate through all of the characters to generate balanced data
+        for char in self.characterList:
+            if (char != target):
+                char2Hex = format(ord(char), "x")
+            
+                charDataDir = self.dataDirectory + self.organizationDirectory + '/' + char2Hex + self.testDirectory
+                
+                data = data + [(e, 0) for e in self._loadRandomImages(charDataDir, quantityEach)]
+        
+        return data
         
     def _loadImages(self, path):
         '''
@@ -338,7 +507,7 @@ class imageProcessor:
             f = os.path.join(path, file)
             # checking if it is a file
             if os.path.isfile(f):
-                data.append(opencv.imread(f, opencv.IMREAD_GRAYSCALE))  #Images are already in black and white, no need to waste space
+                data.append(opencv.imread(f, opencv.IMREAD_GRAYSCALE).astype("uint8"))  #Images are already in black and white, no need to waste space
         
         return data
     
@@ -363,7 +532,7 @@ class imageProcessor:
             
             #Checking if it is a file that is not already selected
             if (os.path.isfile(f) and not hash(file) in selectedFileHashes):
-                data.append(opencv.imread(f, opencv.IMREAD_GRAYSCALE))
+                data.append(opencv.imread(f, opencv.IMREAD_GRAYSCALE).astype("uint8"))
                 selectedFileHashes.append(hash(file))
                 cntr += 1
         
