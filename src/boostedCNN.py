@@ -61,12 +61,12 @@ def createModel(inputShape, outputNum):
     
     return model
 
-def trainModel(model, imageProc, categorize, xTrain, yTrain):
+def trainModel(model, imageProc, categoryNum, xTrain, yTrain):
     trainedModel = None
     hyperParameters = []
     trainingScore = 0
     
-    yTrainVect = categorizeLabels(yTrain, categorize)
+    yTrainVect = categorizeLabels(yTrain, categoryNum)
     
     xTrainNew, yTrainNew, xValid, yValid = imageProc.splitData(xTrain, yTrainVect, 123)
     
