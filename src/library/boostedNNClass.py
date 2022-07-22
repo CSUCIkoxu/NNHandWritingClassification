@@ -48,7 +48,7 @@ class boostedNNClass:
                     currModel = keras.models.clone_model(self.subModels[subModelNum])
                     currModel.compile(optimizer=o, loss=l, metrics=m)
                     
-                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=20, validation_data=(xValid,yValid), callbacks=[callbackBest])
+                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=50, validation_data=(xValid,yValid), callbacks=[callbackBest])
                     
                     #Since we have early stopping, we want to get the epoch at which we had the best score
                     minScore = min(modelHist.history["val_" + m[0]])
@@ -72,7 +72,9 @@ class boostedNNClass:
                    metrics=[hyperParameters[2]])
         
         #Train the best model on the whole data
-        self.subModels[subModelNum].fit(xTrain, yTrain, epochs=scoreEpoch[hyperParameters], batch_size=20)
+        self.subModels[subModelNum].fit(xTrain, yTrain, epochs=scoreEpoch[hyperParameters], batch_size=50)
+        
+        return hyperParameters, trainingScore
     
     def trainSuperModel(self, xTrain, yTrain, categoryNum, xValid=None, yValid=None):
         import tensorflow.keras as keras
@@ -129,7 +131,7 @@ class boostedNNClass:
                     currModel = keras.models.clone_model(self.superModel)
                     currModel.compile(optimizer=o, loss=l, metrics=m)
                     
-                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=20, validation_data=(xValidNew,yValidNew), callbacks=[callbackBest])
+                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=50, validation_data=(xValidNew,yValidNew), callbacks=[callbackBest])
                     
                     #Since we have early stopping, we want to get the epoch at which we had the best score
                     minScore = min(modelHist.history["val_" + m[0]])
@@ -153,7 +155,9 @@ class boostedNNClass:
                    metrics=[hyperParameters[2]])
         
         #Train the best model on the whole data
-        self.superModel.fit(subPred, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=20)
+        self.superModel.fit(subPred, yTrainVect, epochs=scoreEpoch[hyperParameters], batch_size=50)
+        
+        return hyperParameters, trainingScore
         
     def predict(self, xTest):
         pred = None
