@@ -13,6 +13,7 @@ class boostedNNClass:
         
     def trainSubModel(self, xTrain, yTrain, subModelNum, xValid=None, yValid=None):
         import tensorflow.keras as keras
+        import numpy as np
         
         if (subModelNum >= len(self.subModels)):
             raise Exception("subModelNum exceeds the number of sub models in the system")
@@ -22,13 +23,15 @@ class boostedNNClass:
         
         xTrainNew = None
         yTrainNew = None
-        if (xValid == None or yValid == None):
+        if (type(xValid) is np.ndarray and type(yValid) is np.ndarray):
+            #do numpy things
+            xTrainNew = xTrain
+            yTrainNew = yTrain
+        else:
+            # Handle None
             import sklearn.model_selection as ms
             
             xTrainNew, xValid, yTrainNew, yValid = ms.train_test_split(xTrain, yTrain, test_size=0.3)
-        else:
-            xTrainNew = xTrain
-            yTrainNew = yTrain
             
         callbackBest = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
     
@@ -36,8 +39,8 @@ class boostedNNClass:
         scores = {}
         scoreEpoch = {}
         optimizers = ['adadelta', 'adagrad', 'adam', 'adamax', 'ftrl', 'nadam', 'rmsprop', 'sgd']
-        lossFuncs = ['categorical_crossentropy', 'kl_divergence']#, 'poisson']  #poisson gives nan values for some reason
-        metrics = [['categorical_crossentropy']]
+        lossFuncs = ['binary_crossentropy', 'kl_divergence', 'poisson']  #poisson gives nan values for some reason
+        metrics = [['binary_crossentropy']]
         
         for o in optimizers:
             for l in lossFuncs:
@@ -48,7 +51,7 @@ class boostedNNClass:
                     currModel = keras.models.clone_model(self.subModels[subModelNum])
                     currModel.compile(optimizer=o, loss=l, metrics=m)
                     
-                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=50, validation_data=(xValid,yValid), callbacks=[callbackBest])
+                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=200, validation_data=(xValid,yValid), callbacks=[callbackBest])
                     
                     #Since we have early stopping, we want to get the epoch at which we had the best score
                     minScore = min(modelHist.history["val_" + m[0]])
@@ -72,7 +75,7 @@ class boostedNNClass:
                    metrics=[hyperParameters[2]])
         
         #Train the best model on the whole data
-        self.subModels[subModelNum].fit(xTrain, yTrain, epochs=scoreEpoch[hyperParameters], batch_size=50)
+        self.subModels[subModelNum].fit(xTrain, yTrain, epochs=scoreEpoch[hyperParameters], batch_size=100)
         
         return hyperParameters, trainingScore
     
@@ -97,11 +100,8 @@ class boostedNNClass:
         yTrainNew = None
         xValidNew = None
         yValidNew = None
-        if (xValid == None or yValid == None):
-            import sklearn.model_selection as ms
-            
-            xTrainNew, xValidNew, yTrainNew, yValidNew = ms.train_test_split(subPred, yTrainVect, test_size=0.3)
-        else:
+        if (type(xValid) is np.ndarray and type(yValid) is np.ndarray):
+            #do numpy things
             xTrainNew = subPred
             yTrainNew = yTrainVect
             
@@ -111,6 +111,11 @@ class boostedNNClass:
             for i in range(len(xValid)):
                 for j in range(len(self.subModels)):
                     xValidNew[i,j] = self.subModels[j].predict(xValid[i])
+        else:
+            # Handle None
+            import sklearn.model_selection as ms
+            
+            xTrainNew, xValidNew, yTrainNew, yValidNew = ms.train_test_split(subPred, yTrainVect, test_size=0.3)         
         
         #Train Super
         callbackBest = keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
@@ -131,7 +136,7 @@ class boostedNNClass:
                     currModel = keras.models.clone_model(self.superModel)
                     currModel.compile(optimizer=o, loss=l, metrics=m)
                     
-                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=50, validation_data=(xValidNew,yValidNew), callbacks=[callbackBest])
+                    modelHist = currModel.fit(xTrainNew, yTrainNew, epochs=50, batch_size=20, validation_data=(xValidNew,yValidNew), callbacks=[callbackBest])
                     
                     #Since we have early stopping, we want to get the epoch at which we had the best score
                     minScore = min(modelHist.history["val_" + m[0]])

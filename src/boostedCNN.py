@@ -45,7 +45,7 @@ def createSuperModel(inputShape, outputNum):
     model = None
     
     cnn = keras.Sequential()
-    cnn.add(layers.Dense(62, activation='relu', input_shape=inputShape))
+    cnn.add(layers.Dense(62, activation='relu', input_dim=inputShape))
     cnn.add(layers.Dense(124, activation='relu'))
     cnn.add(layers.Dropout(0.3))
     cnn.add(layers.Dense(62, activation='relu'))
@@ -123,13 +123,13 @@ imageProc = imgProcessor.imageProcessor()
 model = createModel((128,128,1), 62)
 
 #Train the model, get hyperParameters, and get the training score
-trainedModel, hyperParams, trainingScore = trainModel(model, imageProc, len(imageProc.characterList))
+subHyperParameters, superHyperParameters, subTrainingScore, superTrainingScore = trainModel(model, imageProc, 200, len(imageProc.characterList))
 
 #Get data
 xTest, yTest = imageProc.getRandomTestingData(50, seed=123)
 
 #Test the model and calculate stats
-yPred, f1Score, confMat, classReport = testModel(trainedModel, imageProc, xTest, yTest)
+yPred, f1Score, confMat, classReport = testModel(model, imageProc, xTest, yTest)
 
 print(classReport)
 print(confMat)
