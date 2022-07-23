@@ -174,6 +174,34 @@ class boostedNNClass:
         
         return pred
     
+    def save(self, path):
+        import os
+        
+        if not os.path.exists(path + '/sub'):
+            os.mkdir(path + '/sub')
+        if not os.path.exists(path + '/super'):
+            os.mkdir(path + '/super')
+            
+        for i in range(len(self.subModels)):
+            self.subModels[i].save(path + '/sub/subModel' + str(i) + '.h5')
+            
+        self.superModel.save(path + '/super/superModel.h5')
+        
+    def load(self, path):
+        import os
+        import tensorflow.keras as keras
+        
+        self.subModels = []
+        self.superModel = None
+        
+        for file in os.listdir(path + '/sub'):
+            f = os.path.join(path + '/sub', file)
+            # checking if it is a file
+            if os.path.isfile(f):
+                self.subModels.append(keras.models.load_model(f))
+                
+        self.superModel = keras.models.load_model(path + '/super/superModel.h5')
+    
     def _categorizeLabels(self, y, numClasses):
         import tensorflow as tf
         return tf.keras.utils.to_categorical(y, num_classes=numClasses, dtype = "uint8")
